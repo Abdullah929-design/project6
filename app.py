@@ -40,16 +40,11 @@ def recommend(movie):
 # -----------------------------
 # Load data
 # -----------------------------
-movies_df = pickle.load(open('movies.pkl', 'rb'))  # Full DataFrame with 'title' and 'movie_id'
-similarity = pickle.load(open('similarity.pkl', 'rb'))
-movies_list = movies_df['title'].values  # Titles for the selectbox
-
-# Download similarity.pkl if missing
 SIMILARITY_URL = 'https://drive.google.com/uc?export=download&id=1aysMEIEUNpTrC3RPkNE_lSevUniFgNLw'
 def download_similarity_pickle():
     if not os.path.exists('similarity.pkl'):
+        st.info('Downloading similarity.pkl...')
         try:
-            st.info('Downloading similarity.pkl...')
             response = requests.get(SIMILARITY_URL)
             with open('similarity.pkl', 'wb') as f:
                 f.write(response.content)
@@ -57,8 +52,19 @@ def download_similarity_pickle():
         except Exception as e:
             st.error(f"Failed to download similarity.pkl: {e}")
 
-# Add this before loading similarity.pkl:
+# Download before load
+
+# -----------------------------
 download_similarity_pickle()
+
+if not os.path.exists('similarity.pkl'):
+    st.error("similarity.pkl not found. Download failed or not accessible. Please check your Google Drive link and sharing settings.")
+    st.stop()
+# -----------------------------
+# Now, safe to load:
+movies_df = pickle.load(open('movies.pkl', 'rb'))  # Full DataFrame with 'title' and 'movie_id'
+similarity = pickle.load(open('similarity.pkl', 'rb'))
+movies_list = movies_df['title'].values  # Titles for the selectbox
 
 
 # -----------------------------
