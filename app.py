@@ -40,39 +40,28 @@ def recommend(movie):
 # -----------------------------
 # Load data
 # -----------------------------
-def download_large_file_from_google_drive(file_id, destination):
-    # Adapted from: https://stackoverflow.com/a/39225039
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-        return None
+SIMILARITY_URL = 'https://huggingface.co/datasets/aqeelabdullah654/movie-recommender-files/resolve/main/similarity.pkl'
+SIMILARITY_PATH = 'similarity.pkl'
 
-    URL = "https://drive.google.com/uc?export=download"
-    session = requests.Session()
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    token = get_confirm_token(response)
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(32768):
+# Robust simple downloader for regular HTTP/HTTPS files (Hugging Face)
+def download_file(url, dest):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(dest, 'wb') as f:
+        for chunk in response.iter_content(8192):
             if chunk:
                 f.write(chunk)
 
-FILE_ID = '1aysMEIEUNpTrC3RPkNE_lSevUniFgNLw'
-SIMILARITY_PATH = 'similarity.pkl'
-
 if not os.path.exists(SIMILARITY_PATH):
-    st.info('Downloading similarity.pkl from Google Drive...')
+    st.info('Downloading similarity.pkl from Hugging Face...')
     try:
-        download_large_file_from_google_drive(FILE_ID, SIMILARITY_PATH)
+        download_file(SIMILARITY_URL, SIMILARITY_PATH)
         st.success('similarity.pkl downloaded!')
     except Exception as e:
         st.error(f"Failed to download similarity.pkl: {e}")
 
 if not os.path.exists(SIMILARITY_PATH):
-    st.error("similarity.pkl not found. Download failed or not accessible. Please check your Google Drive link and sharing settings.")
+    st.error("similarity.pkl not found. Download failed or not accessible. Please check your link and sharing settings.")
     st.stop()
 
 movies_df = pickle.load(open('movies.pkl', 'rb'))
